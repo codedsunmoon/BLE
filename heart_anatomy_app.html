@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Kalp Anatomi Eğitim Cihazı</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --accent: #e84d4d;
+    --accent2: #58a6ff;
+    --accent3: #3fb950;
+    --accent4: #d29922;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #1a0a0a 0%, #0d1117 60%);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-icon { font-size: 28px; }
+  .header-title { font-size: 18px; font-weight: 700; }
+  .header-sub { font-size: 12px; color: var(--muted); }
+  .bt-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #444; margin-left: auto;
+    flex-shrink: 0;
+  }
+  .bt-dot.on { background: var(--accent3); box-shadow: 0 0 8px var(--accent3); }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: 1;
+    min-width: 80px;
+    padding: 12px 8px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+  .tab .tab-icon { font-size: 18px; display: block; }
+
+  /* CONTENT */
+  .page { display: none; padding: 16px; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 12px;
+  }
+
+  /* CONNECT BUTTON */
+  .btn-connect {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent2), #1e6ab8);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity .2s;
+  }
+  .btn-connect:active { opacity: .8; }
+  .btn-connect.disconnect {
+    background: linear-gradient(135deg, #5a1e1e, #8b2020);
+  }
+
+  /* BUTTONS */
+  .btn {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .btn:active { transform: scale(.96); }
+  .btn-primary   { background: var(--accent2); color: white; }
+  .btn-success   { background: var(--accent3); color: white; }
+  .btn-warning   { background: var(--accent4); color: white; }
+  .btn-danger    { background: var(--accent);  color: white; }
+  .btn-ghost     { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-sm { padding: 7px 14px; font-size: 12px; }
+  .btn-block { width: 100%; }
+
+  /* SLIDERS */
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .slider-label { font-size: 13px; width: 60px; flex-shrink: 0; }
+  .slider-val   { font-size: 14px; font-weight: 700; width: 36px; text-align: right; flex-shrink: 0; }
+  input[type=range] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    background: var(--accent2);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  input[type=number] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 8px 12px;
+    font-size: 15px;
+    width: 100%;
+  }
+
+  /* GAME SCORE DISPLAY */
+  .score-big {
+    text-align: center;
+    padding: 20px;
+  }
+  .score-num {
+    font-size: 64px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent2), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+  .score-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  .stats-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .stat-box {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-box .stat-val { font-size: 28px; font-weight: 800; }
+  .stat-box .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .stat-box.green .stat-val { color: var(--accent3); }
+  .stat-box.red   .stat-val { color: var(--accent); }
+  .stat-box.blue  .stat-val { color: var(--accent2); }
+  .stat-box.gold  .stat-val { color: var(--accent4); }
+
+  /* PROGRESS BAR */
+  .progress-wrap {
+    background: var(--border);
+    border-radius: 999px;
+    height: 10px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .progress-bar {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent3), var(--accent2));
+    transition: width .2s;
+  }
+
+  /* LOG */
+  .log-box {
+    background: #0a0f14;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    height: 200px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 12px;
+    color: #7ee787;
+  }
+  .log-entry { margin-bottom: 4px; }
+  .log-entry.rx { color: #79c0ff; }
+  .log-entry.err { color: var(--accent); }
+  .log-entry.sys { color: var(--muted); }
+
+  /* PARAM ROWS */
+  .param-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .param-row label { font-size: 13px; flex: 1; }
+  .param-row input { width: 80px; }
+  .param-row .unit { font-size: 12px; color: var(--muted); width: 40px; }
+
+  /* BADGE */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-green { background: #1a3a1a; color: var(--accent3); }
+  .badge-red   { background: #3a1a1a; color: var(--accent); }
+  .badge-blue  { background: #1a2a3a; color: var(--accent2); }
+
+  /* GAME MODE ACTIVE BANNER */
+  .mode-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .mode-banner.game   { background: #1a2a1a; border: 1px solid var(--accent3); color: var(--accent3); }
+  .mode-banner.test   { background: #1a1a2a; border: 1px solid var(--accent2); color: var(--accent2); }
+  .mode-banner.learn  { background: #2a1a10; border: 1px solid var(--accent4); color: var(--accent4); }
+  .mode-banner.off    { display: none; }
+
+  /* RECORD FLASH */
+  @keyframes flash { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .new-record { animation: flash 0.8s ease 3; color: var(--accent4); font-weight: 800; }
+
+  /* FORMULA BOX */
+  .formula-box {
+    background: #0a0f14;
+    border: 1px solid #2a3a2a;
+    border-radius: 10px;
+    padding: 14px;
+    font-family: monospace;
+    font-size: 13px;
+    color: #adbac7;
+    line-height: 1.8;
+    margin-bottom: 14px;
+  }
+  .formula-box .hl { color: var(--accent2); font-weight: 700; }
+  .formula-box .green { color: var(--accent3); }
+  .formula-box .red   { color: var(--accent); }
+
+  /* SECTION DIVIDER */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1e2a1e;
+    border: 1px solid var(--accent3);
+    color: var(--accent3);
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    transition: all .3s;
+    pointer-events: none;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* BOTTOM NAV placeholder */
+  .bottom-safe { height: 20px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-icon">🫀</div>
+  <div>
+    <div class="header-title">Kalp Anatomi Cihazı</div>
+    <div class="header-sub" id="header-sub">Bağlantı bekleniyor…</div>
+  </div>
+  <div class="bt-dot" id="bt-dot"></div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('dashboard')" id="tab-dashboard">
+    <span class="tab-icon">📊</span>Pano
+  </button>
+  <button class="tab" onclick="switchTab('game')" id="tab-game">
+    <span class="tab-icon">🎮</span>Oyun
+  </button>
+  <button class="tab" onclick="switchTab('settings')" id="tab-settings">
+    <span class="tab-icon">⚙️</span>Ayarlar
+  </button>
+  <button class="tab" onclick="switchTab('params')" id="tab-params">
+    <span class="tab-icon">🧮</span>Parametreler
+  </button>
+  <button class="tab" onclick="switchTab('log')" id="tab-log">
+    <span class="tab-icon">📟</span>Terminal
+  </button>
+</div>
+
+<!-- =================== DASHBOARD =================== -->
+<div class="page active" id="page-dashboard">
+
+  <!-- Bağlantı -->
+  <div class="card">
+    <div class="card-title">Bluetooth Bağlantısı</div>
+    <button class="btn-connect" id="btn-bt" onclick="toggleBT()">
+      <span>📡</span> <span id="btn-bt-text">Cihaza Bağlan</span>
+    </button>
+  </div>
+
+  <!-- Mod Göstergesi -->
+  <div class="mode-banner off" id="banner-game">🎮 OYUN MODU AKTİF</div>
+  <div class="mode-banner off" id="banner-test">🧪 TEST MODU AKTİF</div>
+  <div class="mode-banner learn" id="banner-learn">📚 ÖĞRENME MODU</div>
+
+  <!-- Hızlı Durum -->
+  <div class="card">
+    <div class="card-title">Cihaz Durumu</div>
+    <div class="stats-row">
+      <div class="stat-box blue">
+        <div class="stat-val" id="d-vol">–</div>
+        <div class="stat-lbl">Ses</div>
+      </div>
+      <div class="stat-box blue">
+        <div class="stat-val" id="d-br">–</div>
+        <div class="stat-lbl">Parlaklık</div>
+      </div>
+      <div class="stat-box gold">
+        <div class="stat-val" id="d-hi">–</div>
+        <div class="stat-lbl">Rekor</div>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="sendCmd('status')">🔄 Durumu Güncelle</button>
+  </div>
+
+  <!-- Hızlı Kontroller -->
+  <div class="card">
+    <div class="card-title">Hızlı Kontrol</div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn btn-success" onclick="sendCmd('game')">🎮 Oyun Modu</button>
+      <button class="btn btn-primary" onclick="sendCmd('test')">🧪 Test Modu</button>
+      <button class="btn btn-warning" onclick="sendCmd('cal')">📐 Kalibrasyon</button>
+      <button class="btn btn-ghost"   onclick="sendCmd('save')">💾 Ayarları Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- =================== GAME =================== -->
+<div class="page" id="page-game">
+
+  <div class="card">
+    <div class="card-title">Oyun Durumu</div>
+    <div class="score-big">
+      <div class="score-num" id="g-score">0</div>
+      <div class="score-label">Toplam Puan</div>
+    </div>
+
+    <!-- Süre barı -->
+    <div style="margin-bottom:6px; font-size:12px; color:var(--muted)">Kalan Süre</div>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="g-timebar" style="width:100%"></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box green">
+        <div class="stat-val" id="g-correct">0</div>
+        <div class="stat-lbl">✅ Doğru</div>
+      </div>
+      <div class="stat-box red">
+        <div class="stat-val" id="g-wrong">0</div>
+        <div class="stat-lbl">❌ Yanlış</div>
+      </div>
+      <div class="stat-box gold">
+        <div class="stat-val" id="g-hi">0</div>
+        <div class="stat-lbl">🏆 Rekor</div>
+      </div>
+    </div>
+
+    <div id="g-last-event" style="min-height:36px; text-align:center; padding:8px; border-radius:8px; font-size:14px; font-weight:600; background:var(--bg); border:1px solid var(--border); margin-bottom:12px;">
+      Oyun bekleniyor…
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-success" style="flex:1" onclick="sendCmd('game')">▶ Başlat / Durdur</button>
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('game_status')">🔄</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">High Score</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="font-size:36px;font-weight:900;color:var(--accent4)" id="g-hi2">0</div>
+      <div style="flex:1">
+        <div style="font-size:12px;color:var(--muted)">Tüm zamanların en iyi puanı</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px" id="g-record-note"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="confirmResetHi()">Sıfırla</button>
+    </div>
+  </div>
+</div>
+
+<!-- =================== SETTINGS =================== -->
+<div class="page" id="page-settings">
+
+  <div class="card">
+    <div class="card-title">Ses Seviyesi</div>
+    <div class="slider-row">
+      <span class="slider-label">🔊 Ses</span>
+      <input type="range" min="0" max="30" id="sl-vol" oninput="sliderInput('vol', this.value)" onchange="sendSlider('vol')">
+      <span class="slider-val" id="val-vol">18</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">LED Parlaklığı</div>
+    <div class="slider-row">
+      <span class="slider-label">💡 Işık</span>
+      <input type="range" min="10" max="255" id="sl-br" oninput="sliderInput('br', this.value)" onchange="sendSlider('br')">
+      <span class="slider-val" id="val-br">80</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Kaydet</div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-success" style="flex:1" onclick="sendCmd('save')">💾 Ayarları EEPROM'a Kaydet</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-top:8px;">
+      Ses ve parlaklık değerleri cihaza kalıcı olarak kaydedilir.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Kalibrasyon</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">
+      Dokunmatik sensörlerin referans değerlerini sıfırlar. Cihaza dokunulmadan çalıştırın.
+    </p>
+    <button class="btn btn-warning btn-block" onclick="sendCmd('cal')">📐 Kalibrasyonu Başlat</button>
+  </div>
+</div>
+
+<!-- =================== PARAMS =================== -->
+<div class="page" id="page-params">
+
+  <div class="card">
+    <div class="card-title">Oyun Puanlama Formülü</div>
+    <div class="formula-box">
+      <span class="green">Doğru:</span>  P = (<span class="hl">B</span>×<span class="hl">Ks</span>) + (<span class="hl">B</span>×(1-<span class="hl">Ks</span>) × (Tmax-Tspent)/Tmax)<br>
+      <span class="red">Yanlış:</span>  P = -<span class="hl">C</span><br>
+      <span style="color:var(--muted)">Süre doldu:</span>  P = 0
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Parametreler (Eğitmen)</div>
+
+    <div class="param-row">
+      <label>🎯 Baz Puan (B)</label>
+      <input type="number" id="p-b" value="100" min="10" max="200">
+      <span class="unit">puan</span>
+    </div>
+
+    <div class="param-row">
+      <label>⚖️ Sabit Katsayı (Ks%)</label>
+      <input type="number" id="p-k" value="40" min="1" max="99">
+      <span class="unit">%</span>
+    </div>
+
+    <div class="param-row">
+      <label>⏱️ Maks Süre (Tmax)</label>
+      <input type="number" id="p-t" value="30" min="5" max="120">
+      <span class="unit">sn</span>
+    </div>
+
+    <div class="param-row">
+      <label>❌ Ceza Puanı (C)</label>
+      <input type="number" id="p-c" value="20" min="0" max="100">
+      <span class="unit">puan</span>
+    </div>
+
+    <hr class="divider">
+
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" style="flex:1" onclick="sendParams()">📤 Cihaza Gönder</button>
+      <button class="btn btn-success" style="flex:1" onclick="saveParams()">💾 EEPROM Kaydet</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-top:8px;">
+      ⚠️ Parametreler EEPROM'a kaydedildiğinde öğrenci değiştiremez.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Anlık Hesaplama Önizleme</div>
+    <div style="display:flex;gap:10px;margin-bottom:10px;">
+      <div style="flex:1">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Harcanan Süre (sn)</div>
+        <input type="number" id="prev-t" value="10" min="0" style="width:100%" oninput="calcPreview()">
+      </div>
+      <div style="flex:1">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Sonuç</div>
+        <div style="font-size:20px;font-weight:800;padding:10px 0;" id="prev-result">–</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--muted)" id="prev-detail"></div>
+  </div>
+</div>
+
+<!-- =================== LOG =================== -->
+<div class="page" id="page-log">
+
+  <div class="card">
+    <div class="card-title">BT Terminal</div>
+    <div class="log-box" id="log-box"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <input type="text" id="cmd-input" placeholder="Komut girin…"
+        style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:14px;"
+        onkeydown="if(event.key==='Enter') sendRaw()">
+      <button class="btn btn-primary" onclick="sendRaw()">Gönder</button>
+    </div>
+    <hr class="divider">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Hazır Komutlar:</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('status')">status</button>
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('game_status')">game_status</button>
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('cal')">cal</button>
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('save')">save</button>
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('save_game')">save_game</button>
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('reset_hi')">reset_hi</button>
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('game')">game</button>
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('test')">test</button>
+    </div>
+    <hr class="divider">
+    <button class="btn btn-ghost btn-sm" onclick="clearLog()">🗑️ Logu Temizle</button>
+  </div>
+</div>
+
+<div class="bottom-safe"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let btDevice = null;
+let btChar   = null;
+let connected = false;
+
+let gameActive = false;
+let timerInterval = null;
+let questionStartTime = null;
+let currentTmax = 30;
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ============================================================
+// BLUETOOTH (Web Bluetooth API)
+// ============================================================
+async function toggleBT() {
+  if (connected) {
+    disconnectBT();
+  } else {
+    await connectBT();
+  }
+}
+
+async function connectBT() {
+  if (!navigator.bluetooth) {
+    toast('Web Bluetooth bu tarayıcıda desteklenmiyor.\nChrome (Android) kullanın.', 'err');
+    log('Web Bluetooth desteklenmiyor', 'err');
+    return;
+  }
+  try {
+    log('Cihaz aranıyor…', 'sys');
+    btDevice = await navigator.bluetooth.requestDevice({
+      filters: [{ name: 'ESP32_TOUCH_MENU' }],
+      optionalServices: ['0000ffe0-0000-1000-8000-00805f9b34fb']
+    });
+
+    btDevice.addEventListener('gattserverdisconnected', onDisconnect);
+
+    const server  = await btDevice.gatt.connect();
+    const service = await server.getPrimaryService('0000ffe0-0000-1000-8000-00805f9b34fb');
+    btChar        = await service.getCharacteristic('0000ffe1-0000-1000-8000-00805f9b34fb');
+
+    await btChar.startNotifications();
+    btChar.addEventListener('characteristicvaluechanged', onBTData);
+
+    setConnected(true);
+    log('Bağlandı: ' + btDevice.name, 'sys');
+    setTimeout(() => sendCmd('status'), 500);
+    setTimeout(() => sendCmd('game_status'), 800);
+  } catch(e) {
+    log('Bağlantı hatası: ' + e.message, 'err');
+    toast('Bağlantı başarısız', 'err');
+  }
+}
+
+function disconnectBT() {
+  if (btDevice && btDevice.gatt.connected) btDevice.gatt.disconnect();
+  setConnected(false);
+}
+
+function onDisconnect() {
+  setConnected(false);
+  log('Bağlantı kesildi', 'err');
+}
+
+function setConnected(v) {
+  connected = v;
+  document.getElementById('bt-dot').className = 'bt-dot' + (v ? ' on' : '');
+  document.getElementById('btn-bt-text').textContent = v ? 'Bağlantıyı Kes' : 'Cihaza Bağlan';
+  document.getElementById('btn-bt').className = 'btn-connect' + (v ? ' disconnect' : '');
+  document.getElementById('header-sub').textContent = v
+    ? ('Bağlı: ' + (btDevice ? btDevice.name : 'ESP32'))
+    : 'Bağlantı bekleniyor…';
+}
+
+async function sendCmd(cmd) {
+  if (!connected || !btChar) {
+    log('Bağlı değil!', 'err');
+    toast('Önce bağlanın');
+    return;
+  }
+  try {
+    const enc = new TextEncoder().encode(cmd + '\n');
+    await btChar.writeValue(enc);
+    log('→ ' + cmd, 'tx');
+  } catch(e) {
+    log('Gönderme hatası: ' + e.message, 'err');
+  }
+}
+
+function sendRaw() {
+  const inp = document.getElementById('cmd-input');
+  const v = inp.value.trim();
+  if (!v) return;
+  sendCmd(v);
+  inp.value = '';
+}
+
+// Receive
+let rxBuffer = '';
+function onBTData(e) {
+  const dec = new TextDecoder();
+  rxBuffer += dec.decode(e.target.value);
+  const lines = rxBuffer.split('\n');
+  rxBuffer = lines.pop();
+  lines.forEach(parseLine);
+}
+
+function parseLine(line) {
+  line = line.trim();
+  if (!line) return;
+  log('← ' + line, 'rx');
+  parseResponse(line);
+}
+
+// ============================================================
+// PARSE RESPONSES
+// ============================================================
+function parseResponse(line) {
+  // STATUS: VOL:18 BR:80 TEST:0 GAME:0 SCORE:0.0 HI:250
+  if (line.startsWith('VOL:')) {
+    const m = line.match(/VOL:(\d+).*BR:(\d+).*GAME:(\d).*SCORE:([\d.]+).*HI:(\d+)/);
+    if (m) {
+      setVal('d-vol', m[1]);
+      setVal('d-br',  m[2]);
+      setVal('d-hi',  m[5]);
+      setSlider('sl-vol', 'val-vol', m[1]);
+      setSlider('sl-br',  'val-br',  m[2]);
+      gameActive = m[3] === '1';
+      updateModeBanners(m[3]==='1', false);
+    }
+    return;
+  }
+
+  // GAME_STATUS
+  if (line.startsWith('GAME_STATUS:')) {
+    const active  = line.includes('ACTIVE:1');
+    const sm = line.match(/SCORE:([\d.]+)/);
+    const qm = line.match(/Q:(\d+)/);
+    const cm = line.match(/CORRECT:(\d+)/);
+    const wm = line.match(/WRONG:(\d+)/);
+    const hm = line.match(/HI:(\d+)/);
+    if (sm) { setVal('g-score', parseFloat(sm[1]).toFixed(0)); }
+    if (cm) setVal('g-correct', cm[1]);
+    if (wm) setVal('g-wrong',   wm[1]);
+    if (hm) { setVal('g-hi', hm[1]); setVal('g-hi2', hm[1]); setVal('d-hi', hm[1]); }
+    gameActive = active;
+    updateModeBanners(active, false);
+    return;
+  }
+
+  // GAME_PARAMS:B:100 K:0.40 TMAX:30 C:20
+  if (line.startsWith('GAME_PARAMS:')) {
+    const bm = line.match(/B:(\d+)/);
+    const km = line.match(/K:([\d.]+)/);
+    const tm = line.match(/TMAX:(\d+)/);
+    const cm = line.match(/C:(\d+)/);
+    if (bm) document.getElementById('p-b').value = bm[1];
+    if (km) document.getElementById('p-k').value = Math.round(parseFloat(km[1]) * 100);
+    if (tm) { document.getElementById('p-t').value = tm[1]; currentTmax = parseInt(tm[1]); }
+    if (cm) document.getElementById('p-c').value = cm[1];
+    calcPreview();
+    return;
+  }
+
+  // GAME_Q:5
+  if (line.startsWith('GAME_Q:')) {
+    const pad = parseInt(line.split(':')[1]);
+    questionStartTime = Date.now();
+    currentTmax = parseInt(document.getElementById('p-t').value) || 30;
+    startTimeBar();
+    setGameEvent('⏳ Soru: Bölge ' + (pad+1), '#adbac7');
+    gameActive = true;
+    updateModeBanners(true, false);
+    return;
+  }
+
+  // GAME_CORRECT:PAD:3 PTS:72.5 TOTAL:145.0
+  if (line.startsWith('GAME_CORRECT:')) {
+    const pm = line.match(/PTS:([\d.]+)/);
+    const tm = line.match(/TOTAL:([\d.]+)/);
+    const wm = line.match(/PAD:(\d+)/);
+    stopTimeBar();
+    const pts = pm ? parseFloat(pm[1]).toFixed(1) : '?';
+    setGameEvent('✅ Doğru! +' + pts + ' puan', '#3fb950');
+    if (tm) setVal('g-score', parseFloat(tm[1]).toFixed(0));
+    incrementVal('g-correct');
+    return;
+  }
+
+  // GAME_WRONG:PAD:7 PENALTY:20 TOTAL:125.0
+  if (line.startsWith('GAME_WRONG:')) {
+    const pm = line.match(/PENALTY:(\d+)/);
+    const tm = line.match(/TOTAL:([\d.]+)/);
+    stopTimeBar();
+    setGameEvent('❌ Yanlış! -' + (pm ? pm[1] : '?') + ' ceza', '#e84d4d');
+    if (tm) setVal('g-score', parseFloat(tm[1]).toFixed(0));
+    incrementVal('g-wrong');
+    return;
+  }
+
+  // GAME_TIMEOUT
+  if (line.startsWith('GAME_TIMEOUT:')) {
+    stopTimeBar();
+    setGameEvent('⏰ Süre doldu! 0 puan', '#d29922');
+    return;
+  }
+
+  // GAME_END
+  if (line.startsWith('GAME_END:')) {
+    const sm = line.match(/SCORE:(\d+)/);
+    const cm = line.match(/CORRECT:(\d+)/);
+    const wm = line.match(/WRONG:(\d+)/);
+    stopTimeBar();
+    gameActive = false;
+    updateModeBanners(false, false);
+    if (sm) setVal('g-score', sm[1]);
+    if (cm) setVal('g-correct', cm[1]);
+    if (wm) setVal('g-wrong', wm[1]);
+    setGameEvent('🏁 Oyun bitti! Skor: ' + (sm ? sm[1] : '?'), '#58a6ff');
+    return;
+  }
+
+  // GAME_RECORD
+  if (line.startsWith('GAME_RECORD:')) {
+    const sc = parseInt(line.split(':')[1]);
+    setVal('g-hi', sc);
+    setVal('g-hi2', sc);
+    setVal('d-hi', sc);
+    document.getElementById('g-hi2').className = 'new-record';
+    document.getElementById('g-record-note').textContent = '🏆 Yeni Rekor!';
+    toast('🏆 Yeni Rekor: ' + sc);
+    return;
+  }
+
+  // GAME_START
+  if (line === 'GAME_START') {
+    gameActive = true;
+    updateModeBanners(true, false);
+    setVal('g-score', '0');
+    setVal('g-correct', '0');
+    setVal('g-wrong', '0');
+    setGameEvent('🎮 Oyun başladı!', '#58a6ff');
+    toast('Oyun modu başladı');
+    return;
+  }
+
+  // CAL OK
+  if (line === 'CAL OK') { toast('Kalibrasyon tamamlandı ✅'); return; }
+  if (line === 'SETTINGS_SAVED') { toast('Ayarlar kaydedildi 💾'); return; }
+  if (line === 'GAME_SETTINGS_SAVED') { toast('Oyun parametreleri kaydedildi 💾'); return; }
+  if (line === 'HI_RESET') { setVal('g-hi','0'); setVal('g-hi2','0'); toast('Rekor sıfırlandı'); return; }
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function setVal(id, v) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = v;
+}
+function incrementVal(id) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = (parseInt(el.textContent)||0) + 1;
+}
+function setSlider(slId, valId, v) {
+  const sl = document.getElementById(slId);
+  const vl = document.getElementById(valId);
+  if (sl) sl.value = v;
+  if (vl) vl.textContent = v;
+}
+function sliderInput(type, v) {
+  document.getElementById('val-' + type).textContent = v;
+}
+async function sendSlider(type) {
+  const v = document.getElementById('sl-' + type).value;
+  await sendCmd(type + v);
+}
+function updateModeBanners(game, test) {
+  const bg = document.getElementById('banner-game');
+  const bt = document.getElementById('banner-test');
+  const bl = document.getElementById('banner-learn');
+  bg.className = 'mode-banner ' + (game  ? 'game'  : 'off');
+  bt.className = 'mode-banner ' + (test  ? 'test'  : 'off');
+  bl.className = 'mode-banner ' + (!game && !test ? 'learn' : 'off');
+}
+function setGameEvent(msg, color) {
+  const el = document.getElementById('g-last-event');
+  el.textContent = msg;
+  el.style.color = color;
+}
+
+// Süre barı
+function startTimeBar() {
+  stopTimeBar();
+  const bar = document.getElementById('g-timebar');
+  timerInterval = setInterval(() => {
+    if (!questionStartTime) return;
+    const elapsed = (Date.now() - questionStartTime) / 1000;
+    const pct = Math.max(0, 100 - (elapsed / currentTmax) * 100);
+    bar.style.width = pct + '%';
+    if (pct < 20) bar.style.background = 'var(--accent)';
+    else if (pct < 50) bar.style.background = 'var(--accent4)';
+    else bar.style.background = 'linear-gradient(90deg, var(--accent3), var(--accent2))';
+  }, 100);
+}
+function stopTimeBar() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  document.getElementById('g-timebar').style.width = '0%';
+}
+
+// LOG
+function log(msg, type) {
+  const box = document.getElementById('log-box');
+  const el  = document.createElement('div');
+  el.className = 'log-entry ' + (type || '');
+  const now = new Date();
+  el.textContent = `[${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}] ${msg}`;
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+}
+function clearLog() {
+  document.getElementById('log-box').innerHTML = '';
+}
+
+// TOAST
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// PARAMS
+function sendParams() {
+  const b = document.getElementById('p-b').value;
+  const k = document.getElementById('p-k').value;
+  const t = document.getElementById('p-t').value;
+  const c = document.getElementById('p-c').value;
+  sendCmd('set_b:' + b);
+  setTimeout(() => sendCmd('set_k:' + k), 100);
+  setTimeout(() => sendCmd('set_t:' + t), 200);
+  setTimeout(() => sendCmd('set_c:' + c), 300);
+  currentTmax = parseInt(t);
+  toast('Parametreler gönderildi');
+  calcPreview();
+}
+function saveParams() {
+  sendParams();
+  setTimeout(() => sendCmd('save_game'), 500);
+}
+
+// PREVIEW CALC
+function calcPreview() {
+  const B  = parseFloat(document.getElementById('p-b').value)  || 100;
+  const Ks = parseFloat(document.getElementById('p-k').value) / 100 || 0.4;
+  const T  = parseFloat(document.getElementById('p-t').value)  || 30;
+  const C  = parseFloat(document.getElementById('p-c').value)  || 20;
+  const ts = parseFloat(document.getElementById('prev-t').value) || 0;
+  const tSpent = Math.min(ts, T);
+  const pts = (B * Ks) + (B * (1 - Ks) * ((T - tSpent) / T));
+  document.getElementById('prev-result').textContent = pts.toFixed(1) + ' puan';
+  document.getElementById('prev-detail').textContent =
+    `Sabit: ${(B*Ks).toFixed(1)} + Hız bonusu: ${(B*(1-Ks)*((T-tSpent)/T)).toFixed(1)}`;
+}
+
+function confirmResetHi() {
+  if (confirm('High score sıfırlansın mı?')) sendCmd('reset_hi');
+}
+
+// Init preview
+calcPreview();
+document.getElementById('prev-t').addEventListener('input', calcPreview);
+
+// Demo mode when not connected
+log('Uygulama hazır. Cihaza bağlanmak için "Cihaza Bağlan" butonuna tıklayın.', 'sys');
+log('Web Bluetooth API gerektiriyor (Chrome Android önerilir).', 'sys');
+</script>
+</body>
+</html>
