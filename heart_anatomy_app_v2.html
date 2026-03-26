@@ -639,14 +639,14 @@ async function connectBT() {
     log('Cihaz aranıyor…', 'sys');
     btDevice = await navigator.bluetooth.requestDevice({
       acceptAllDevices: true,
-      optionalServices: ['0000ffe0-0000-1000-8000-00805f9b34fb']
+      optionalServices: ['4fafc201-1fb5-459e-8fcc-c5c9c331914b']
     });
 
     btDevice.addEventListener('gattserverdisconnected', onDisconnect);
 
     const server  = await btDevice.gatt.connect();
-    const service = await server.getPrimaryService('0000ffe0-0000-1000-8000-00805f9b34fb');
-    btChar        = await service.getCharacteristic('0000ffe1-0000-1000-8000-00805f9b34fb');
+    const service = await server.getPrimaryService('4fafc201-1fb5-459e-8fcc-c5c9c331914b');
+    btChar        = await service.getCharacteristic('beb5483e-36e1-4688-b7f5-ea07361b26a8');
 
     await btChar.startNotifications();
     btChar.addEventListener('characteristicvaluechanged', onBTData);
