@@ -639,37 +639,65 @@ async function toggleBT() {
 
 async function connectBT() {
   if (!navigator.bluetooth) {
-    toast('Web Bluetooth bu tarayıcıda desteklenmiyor.\nChrome (Android) kullanın.', 'err');
-    log('Web Bluetooth desteklenmiyor', 'err');
+    log('HATA: Web Bluetooth desteklenmiyor!', 'err');
+    log('Chrome Android kullanin, chrome://flags/#enable-web-bluetooth aktif olmali', 'err');
+    toast('Web Bluetooth desteklenmiyor');
     return;
   }
   try {
-    log('Cihaz aranıyor… (ESP32_HEART)', 'sys');
+    log('Cihaz taranıyor…', 'sys');
     btDevice = await navigator.bluetooth.requestDevice({
-      filters: [{ name: 'ESP32_HEART' }],
+      filters: [
+        { name: 'ESP32_HEART' },
+        { services: [NUS_SERVICE] }
+      ],
       optionalServices: [NUS_SERVICE]
     });
 
+    log('Secildi: ' + btDevice.name + ' — GATT baglaniyor…', 'sys');
     btDevice.addEventListener('gattserverdisconnected', onDisconnect);
 
-    const server  = await btDevice.gatt.connect();
+    // Bazen ilk denemede basarisiz olur — 1 retry
+    let server;
+    try {
+      server = await btDevice.gatt.connect();
+    } catch(e1) {
+      log('Ilk deneme basarisiz, tekrar…', 'sys');
+      await new Promise(r => setTimeout(r, 1000));
+      server = await btDevice.gatt.connect();
+    }
+    log('GATT OK — servis aranıyor…', 'sys');
+
     const service = await server.getPrimaryService(NUS_SERVICE);
+    log('NUS servisi bulundu', 'sys');
 
     // TX: ESP → Telefon (Notify)
     btChar = await service.getCharacteristic(NUS_TX_CHAR);
     await btChar.startNotifications();
     btChar.addEventListener('characteristicvaluechanged', onBTData);
+    log('TX Notify OK', 'sys');
 
     // RX: Telefon → ESP (Write)
     btRxChar = await service.getCharacteristic(NUS_RX_CHAR);
+    log('RX Write OK', 'sys');
 
     setConnected(true);
-    log('Bağlandı: ' + btDevice.name, 'sys');
-    setTimeout(() => sendCmd('status'), 500);
-    setTimeout(() => sendCmd('game_status'), 800);
+    log('Baglandi: ' + btDevice.name, 'sys');
+    setTimeout(() => sendCmd('status'), 600);
+    setTimeout(() => sendCmd('game_status'), 1000);
   } catch(e) {
-    log('Bağlantı hatası: ' + e.message, 'err');
-    toast('Bağlantı başarısız', 'err');
+    log('HATA: ' + e.name + ' — ' + e.message, 'err');
+    if (e.name === 'NotFoundError') {
+      log('→ Iptal edildi veya cihaz secilmedi.', 'err');
+    } else if (e.message && e.message.includes('getPrimaryService')) {
+      log('→ Servis bulunamadi. ESP32 BLE baslatildi mi? Serial Monitor kontrol edin.', 'err');
+    } else if (e.name === 'NetworkError') {
+      log('→ GATT baglantisi kurulamadi. ESP32 acik ve yakin mi?', 'err');
+    } else if (e.name === 'SecurityError') {
+      log('→ HTTPS gerekli veya Bluetooth izni yok.', 'err');
+    }
+    toast('Baglanti basarisiz — Terminal sekmesine bakin');
+    btDevice = null;
   }
 }
 
