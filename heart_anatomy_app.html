@@ -646,11 +646,11 @@ async function connectBT() {
   }
   try {
     log('Cihaz taranıyor…', 'sys');
+    // SADECE isim filtresi — services filtresini buraya koymayın!
+    // Android Chrome, services filtresi varken getPrimaryService'i
+    // cache'den okuyup bulamıyor. Servis sadece optionalServices'da olmalı.
     btDevice = await navigator.bluetooth.requestDevice({
-      filters: [
-        { name: 'ESP32_HEART' },
-        { services: [NUS_SERVICE] }
-      ],
+      filters: [{ name: 'ESP32_HEART' }],
       optionalServices: [NUS_SERVICE]
     });
 
@@ -663,9 +663,13 @@ async function connectBT() {
       server = await btDevice.gatt.connect();
     } catch(e1) {
       log('Ilk deneme basarisiz, tekrar…', 'sys');
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise(r => setTimeout(r, 1200));
       server = await btDevice.gatt.connect();
     }
+
+    // GATT bağlandıktan sonra servislerin hazır olması için kısa bekleme
+    // Bu olmadan Android Chrome getPrimaryService'te NotFoundError fırlatıyor
+    await new Promise(r => setTimeout(r, 500));
     log('GATT OK — servis aranıyor…', 'sys');
 
     const service = await server.getPrimaryService(NUS_SERVICE);
