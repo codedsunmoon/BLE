@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Kalp Anatomi Eğitim Cihazı</title>
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --border: #30363d;
+    --accent: #e84d4d; --accent2: #58a6ff; --accent3: #3fb950;
+    --accent4: #d29922; --text: #e6edf3; --muted: #8b949e;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; padding-bottom: 80px; }
+
+  .header { background: linear-gradient(135deg,#1a0a0a,#0d1117); border-bottom: 1px solid var(--border); padding: 14px 16px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 100; }
+  .header-icon { font-size: 26px; }
+  .header-title { font-size: 16px; font-weight: 700; }
+  .header-sub { font-size: 11px; color: var(--muted); }
+  .bt-dot { width: 10px; height: 10px; border-radius: 50%; background: #444; margin-left: auto; flex-shrink: 0; }
+  .bt-dot.on { background: var(--accent3); box-shadow: 0 0 8px var(--accent3); }
+
+  .tabs { display: flex; background: var(--card); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: 1; min-width: 72px; padding: 10px 6px; text-align: center; font-size: 11px; color: var(--muted); border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; transition: all .2s; white-space: nowrap; }
+  .tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+  .tab .ti { font-size: 16px; display: block; }
+  .tab-lock { font-size: 9px; margin-left: 1px; opacity: .5; }
+
+  .page { display: none; padding: 14px; }
+  .page.active { display: block; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+  .card-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+
+  .btn-connect { width: 100%; padding: 14px; background: linear-gradient(135deg,var(--accent2),#1e6ab8); color: white; border: none; border-radius: var(--radius); font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity .2s; }
+  .btn-connect:active { opacity: .8; }
+  .btn-connect.disconnect { background: linear-gradient(135deg,#5a1e1e,#8b2020); }
+
+  .btn { padding: 9px 16px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .btn:active { transform: scale(.96); }
+  .btn-primary { background: var(--accent2); color: white; }
+  .btn-success { background: var(--accent3); color: white; }
+  .btn-warning { background: var(--accent4); color: white; }
+  .btn-danger  { background: var(--accent);  color: white; }
+  .btn-ghost   { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-block { width: 100%; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .slider-label { font-size: 12px; width: 55px; flex-shrink: 0; }
+  .slider-val { font-size: 13px; font-weight: 700; width: 34px; text-align: right; flex-shrink: 0; }
+  input[type=range] { flex: 1; -webkit-appearance: none; height: 6px; border-radius: 3px; background: var(--border); outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: var(--accent2); border-radius: 50%; cursor: pointer; }
+  input[type=number] { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 10px; font-size: 14px; width: 100%; }
+
+  /* ====== MOD KARTI (büyük, net) ====== */
+  .mode-card {
+    border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 14px;
+    border: 2px solid transparent; transition: all .4s;
+  }
+  .mode-card .mc-icon { font-size: 32px; flex-shrink: 0; }
+  .mode-card .mc-info { flex: 1; }
+  .mode-card .mc-name { font-size: 17px; font-weight: 800; }
+  .mode-card .mc-desc { font-size: 12px; opacity: .75; margin-top: 3px; }
+  .mode-card .mc-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; flex-shrink: 0; }
+
+  .mode-card.learn { background: #1e1508; border-color: var(--accent4); color: var(--accent4); }
+  .mode-card.learn .mc-badge { background: var(--accent4); color: #000; }
+  .mode-card.test  { background: #0f1520; border-color: var(--accent2); color: var(--accent2); }
+  .mode-card.test  .mc-badge { background: var(--accent2); color: #000; }
+  .mode-card.game  { background: #0f1f0f; border-color: var(--accent3); color: var(--accent3); }
+  .mode-card.game  .mc-badge { background: var(--accent3); color: #000; }
+
+  /* ====== DURUM KUTULARI ====== */
+  .stats-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .stat-box { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; text-align: center; }
+  .stat-box .sv { font-size: 24px; font-weight: 800; }
+  .stat-box .sl { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .stat-box.green .sv { color: var(--accent3); }
+  .stat-box.red   .sv { color: var(--accent); }
+  .stat-box.blue  .sv { color: var(--accent2); }
+  .stat-box.gold  .sv { color: var(--accent4); }
+
+  /* Auto-refresh göstergesi */
+  .refresh-row { display: flex; align-items: center; gap: 8px; }
+  .refresh-label { font-size: 11px; color: var(--muted); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinning { display: inline-block; animation: spin 1s linear infinite; }
+
+  /* Oyun */
+  .score-big { text-align: center; padding: 16px; }
+  .score-num { font-size: 56px; font-weight: 900; background: linear-gradient(135deg,var(--accent2),var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+  .score-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .progress-wrap { background: var(--border); border-radius: 999px; height: 10px; overflow: hidden; margin-bottom: 12px; }
+  .progress-bar { height: 100%; border-radius: 999px; background: linear-gradient(90deg,var(--accent3),var(--accent2)); transition: width .15s; }
+
+  /* Log */
+  .log-box { background: #0a0f14; border: 1px solid var(--border); border-radius: 10px; padding: 10px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px; color: #7ee787; }
+  .log-entry { margin-bottom: 3px; }
+  .log-entry.rx  { color: #79c0ff; }
+  .log-entry.err { color: var(--accent); }
+  .log-entry.sys { color: var(--muted); }
+
+  /* Param */
+  .param-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .param-row label { font-size: 12px; flex: 1; }
+  .param-row input { width: 75px; }
+  .param-row .unit { font-size: 11px; color: var(--muted); width: 36px; }
+  .formula-box { background: #0a0f14; border: 1px solid #2a3a2a; border-radius: 10px; padding: 12px; font-family: monospace; font-size: 12px; color: #adbac7; line-height: 1.8; margin-bottom: 12px; }
+  .formula-box .hl { color: var(--accent2); font-weight: 700; }
+  .formula-box .green { color: var(--accent3); }
+  .formula-box .red   { color: var(--accent); }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 86px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1e2a1e; border: 1px solid var(--accent3); color: var(--accent3); padding: 9px 18px; border-radius: 999px; font-size: 12px; font-weight: 600; opacity: 0; transition: all .3s; pointer-events: none; z-index: 999; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ====== PIN MODALı ====== */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 500; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal-box { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 26px 22px; width: 86%; max-width: 340px; text-align: center; }
+  .modal-box h3 { font-size: 17px; margin-bottom: 5px; }
+  .modal-box p  { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+  .pin-dots { display: flex; justify-content: center; gap: 14px; margin-bottom: 22px; }
+  .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); background: transparent; transition: background .15s; }
+  .pin-dot.filled { background: var(--accent2); border-color: var(--accent2); }
+  .pin-dot.error  { background: var(--accent);  border-color: var(--accent); animation: shake .3s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+  .pin-pad { display: grid; grid-template-columns: repeat(3,1fr); gap: 9px; }
+  .pin-key { padding: 15px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; font-size: 19px; font-weight: 700; color: var(--text); cursor: pointer; transition: background .12s; user-select: none; }
+  .pin-key:active { background: #2a3a4a; }
+  .pin-key.del { color: var(--accent); font-size: 15px; }
+  .pin-key.empty { background: transparent; border-color: transparent; pointer-events: none; }
+  @keyframes flash { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .new-record { animation: flash .8s ease 3; color: var(--accent4); font-weight: 800; }
+</style>
+</head>
+<body>
+
+<!-- PIN MODAL -->
+<div class="modal-overlay" id="pin-modal">
+  <div class="modal-box">
+    <div style="font-size:32px;margin-bottom:8px;">🔐</div>
+    <h3>Eğitmen Girişi</h3>
+    <p id="pin-desc">Bu bölüme erişmek için PIN girin</p>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key empty"></button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key del" onclick="pinDel()">⌫</button>
+    </div>
+    <div style="margin-top:14px;">
+      <button class="btn btn-ghost btn-sm btn-block" onclick="pinCancel()">İptal</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-icon">🫀</div>
+  <div>
+    <div class="header-title">Kalp Anatomi Cihazı</div>
+    <div class="header-sub" id="header-sub">Bağlantı bekleniyor…</div>
+  </div>
+  <div class="bt-dot" id="bt-dot"></div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('dashboard')" id="tab-dashboard"><span class="ti">📊</span>Pano</button>
+  <button class="tab" onclick="switchTab('game')"      id="tab-game"><span class="ti">🎮</span>Oyun</button>
+  <button class="tab" onclick="switchTab('settings')"  id="tab-settings"><span class="ti">⚙️</span>Ayarlar</button>
+  <button class="tab" onclick="tryProtected('params')" id="tab-params"><span class="ti">🧮</span>Param<span class="tab-lock">🔒</span></button>
+  <button class="tab" onclick="tryProtected('log')"    id="tab-log"><span class="ti">📟</span>Terminal<span class="tab-lock">🔒</span></button>
+</div>
+
+<!-- =================== DASHBOARD =================== -->
+<div class="page active" id="page-dashboard">
+
+  <div class="card">
+    <div class="card-title">Bluetooth Bağlantısı</div>
+    <button class="btn-connect" id="btn-bt" onclick="toggleBT()">
+      <span>📡</span><span id="btn-bt-text">Cihaza Bağlan</span>
+    </button>
+  </div>
+
+  <!-- MOD GÖSTERGESİ — cihazdan gelen duruma göre otomatik güncellenir -->
+  <div class="mode-card learn" id="mode-card">
+    <div class="mc-icon" id="mc-icon">📚</div>
+    <div class="mc-info">
+      <div class="mc-name" id="mc-name">Öğrenme Modu</div>
+      <div class="mc-desc" id="mc-desc">Bölgeye dokununca sesli açıklama çalar</div>
+    </div>
+    <div class="mc-badge" id="mc-badge">AKTİF</div>
+  </div>
+
+  <!-- DURUM — bağlanınca otomatik güncellenir, 10sn'de bir yenilenir -->
+  <div class="card">
+    <div class="card-title">
+      Cihaz Durumu
+      <span class="refresh-label" id="refresh-label" style="margin-left:6px;"></span>
+    </div>
+    <div class="stats-row">
+      <div class="stat-box blue"><div class="sv" id="d-vol">–</div><div class="sl">🔊 Ses</div></div>
+      <div class="stat-box blue"><div class="sv" id="d-br">–</div><div class="sl">💡 Işık</div></div>
+      <div class="stat-box gold"><div class="sv" id="d-hi">–</div><div class="sl">🏆 Rekor</div></div>
+    </div>
+    <div class="refresh-row">
+      <button class="btn btn-ghost btn-sm" onclick="refreshStatus()">🔄 Güncelle</button>
+      <span class="refresh-label" id="auto-refresh-note">Bağlandığında otomatik yenilenir</span>
+    </div>
+  </div>
+
+  <!-- HIZLI KONTROL -->
+  <div class="card">
+    <div class="card-title">Hızlı Kontrol</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-success" onclick="toggleMode('game')">🎮 Oyun Modu</button>
+      <button class="btn btn-primary" onclick="toggleMode('test')">🧪 Test Modu</button>
+      <button class="btn btn-warning" onclick="sendCmd('cal')">📐 Kalibrasyon</button>
+      <button class="btn btn-ghost"   onclick="sendCmd('save')">💾 Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- =================== GAME =================== -->
+<div class="page" id="page-game">
+  <div class="card">
+    <div class="card-title">Oyun Durumu</div>
+    <div class="score-big">
+      <div class="score-num" id="g-score">0</div>
+      <div class="score-label">Toplam Puan</div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:5px;">Kalan Süre</div>
+    <div class="progress-wrap"><div class="progress-bar" id="g-timebar" style="width:100%"></div></div>
+    <div class="stats-row">
+      <div class="stat-box green"><div class="sv" id="g-correct">0</div><div class="sl">✅ Doğru</div></div>
+      <div class="stat-box red">  <div class="sv" id="g-wrong">0</div>  <div class="sl">❌ Yanlış</div></div>
+      <div class="stat-box gold"> <div class="sv" id="g-hi">0</div>     <div class="sl">🏆 Rekor</div></div>
+    </div>
+    <div id="g-last-event" style="min-height:34px;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:600;background:var(--bg);border:1px solid var(--border);margin-bottom:10px;">Oyun bekleniyor…</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-success" style="flex:1" onclick="toggleMode('game')">▶ Başlat / Durdur</button>
+      <button class="btn btn-ghost btn-sm" onclick="refreshStatus()">🔄</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">High Score</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="font-size:34px;font-weight:900;color:var(--accent4)" id="g-hi2">0</div>
+      <div style="flex:1">
+        <div style="font-size:11px;color:var(--muted)">Tüm zamanların en iyi puanı</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px" id="g-record-note"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="confirmResetHi()">Sıfırla</button>
+    </div>
+  </div>
+</div>
+
+<!-- =================== SETTINGS =================== -->
+<div class="page" id="page-settings">
+  <div class="card">
+    <div class="card-title">Ses Seviyesi</div>
+    <div class="slider-row">
+      <span class="slider-label">🔊 Ses</span>
+      <input type="range" min="0" max="30" id="sl-vol" oninput="sliderInput('vol',this.value)" onchange="sendSlider('vol')">
+      <span class="slider-val" id="val-vol">18</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">LED Parlaklığı</div>
+    <div class="slider-row">
+      <span class="slider-label">💡 Işık</span>
+      <input type="range" min="10" max="255" id="sl-br" oninput="sliderInput('br',this.value)" onchange="sendSlider('br')">
+      <span class="slider-val" id="val-br">80</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Kaydet</div>
+    <button class="btn btn-success btn-block" onclick="sendCmd('save')">💾 EEPROM'a Kaydet</button>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;">Ses ve parlaklık kalıcı olarak kaydedilir.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Kalibrasyon</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">Dokunmatik sensörlerin referanslarını sıfırlar. Cihaza dokunulmadan çalıştırın.</p>
+    <button class="btn btn-warning btn-block" onclick="sendCmd('cal')">📐 Kalibrasyonu Başlat</button>
+  </div>
+</div>
+
+<!-- =================== PARAMS (KİLİTLİ) =================== -->
+<div class="page" id="page-params">
+  <div class="card">
+    <div class="card-title">Oyun Puanlama Formülü</div>
+    <div class="formula-box">
+      <span class="green">Doğru:</span>  P = (<span class="hl">B</span>×<span class="hl">Ks</span>) + (<span class="hl">B</span>×(1-<span class="hl">Ks</span>) × (Tmax-Tspent)/Tmax)<br>
+      <span class="red">Yanlış:</span>   P = -<span class="hl">C</span><br>
+      <span style="color:var(--muted)">Süre doldu:</span> P = 0
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Parametreler (Eğitmen)</div>
+    <div class="param-row"><label>🎯 Baz Puan (B)</label><input type="number" id="p-b" value="100" min="10" max="200"><span class="unit">puan</span></div>
+    <div class="param-row"><label>⚖️ Sabit Katsayı (Ks%)</label><input type="number" id="p-k" value="40" min="1" max="99"><span class="unit">%</span></div>
+    <div class="param-row"><label>⏱️ Maks Süre (Tmax)</label><input type="number" id="p-t" value="30" min="5" max="120"><span class="unit">sn</span></div>
+    <div class="param-row"><label>❌ Ceza Puanı (C)</label><input type="number" id="p-c" value="20" min="0" max="100"><span class="unit">puan</span></div>
+    <hr class="divider">
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" style="flex:1" onclick="sendParams()">📤 Cihaza Gönder</button>
+      <button class="btn btn-success" style="flex:1" onclick="saveParams()">💾 EEPROM Kaydet</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;">⚠️ EEPROM'a kaydedilince öğrenci değiştiremez.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Anlık Hesaplama Önizleme</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <div style="flex:1"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Harcanan Süre (sn)</div><input type="number" id="prev-t" value="10" min="0" style="width:100%" oninput="calcPreview()"></div>
+      <div style="flex:1"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Sonuç</div><div style="font-size:18px;font-weight:800;padding:9px 0" id="prev-result">–</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted)" id="prev-detail"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">PIN Değiştir</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="password" id="new-pin" placeholder="Yeni 4 haneli PIN" maxlength="4"
+        style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:14px;">
+      <button class="btn btn-warning btn-sm" onclick="changePin()">Değiştir</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px;">Varsayılan PIN: <strong>1234</strong></div>
+  </div>
+</div>
+
+<!-- =================== LOG (KİLİTLİ) =================== -->
+<div class="page" id="page-log">
+  <div class="card">
+    <div class="card-title">BT Terminal</div>
+    <div class="log-box" id="log-box"></div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <input type="text" id="cmd-input" placeholder="Komut girin…"
+        style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:13px;"
+        onkeydown="if(event.key==='Enter')sendRaw()">
+      <button class="btn btn-primary" onclick="sendRaw()">Gönder</button>
+    </div>
+    <hr class="divider">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:7px;">Hazır Komutlar:</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('status')">status</button>
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('game_status')">game_status</button>
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('cal')">cal</button>
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('save')">save</button>
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('save_game')">save_game</button>
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('reset_hi')">reset_hi</button>
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('game')">game</button>
+      <button class="btn btn-ghost btn-sm" onclick="sendCmd('test')">test</button>
+    </div>
+    <hr class="divider">
+    <button class="btn btn-ghost btn-sm" onclick="clearLog()">🗑️ Logu Temizle</button>
+  </div>
+</div>
+
+<div style="height:20px;"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ================================================================
+// STATE
+// ================================================================
+let btDevice = null, btChar = null, btRxChar = null, connected = false;
+let gameActive = false, testActive = false;
+let timerInterval = null, questionStartTime = null, currentTmax = 30;
+let autoRefreshTimer = null;
+
+// ================================================================
+// PIN SİSTEMİ
+// ================================================================
+const PIN_KEY = 'edu_pin';
+let pinBuffer = '';
+let pinTarget  = '';        // Hangi sekmeye geçmeye çalışıyoruz
+let pinUnlocked = { params: false, log: false }; // Oturum boyunca açık kalır
+const DEFAULT_PIN = '1234';
+
+function getPin() {
+  return localStorage.getItem(PIN_KEY) || DEFAULT_PIN;
+}
+
+function tryProtected(tab) {
+  if (pinUnlocked[tab]) { switchTab(tab); return; }
+  pinTarget = tab;
+  pinBuffer = '';
+  updatePinDots();
+  document.getElementById('pin-desc').textContent =
+    tab === 'params' ? 'Parametreler için PIN girin' : 'Terminal için PIN girin';
+  document.getElementById('pin-modal').classList.add('show');
+}
+
+function pinKey(k) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += k;
+  updatePinDots();
+  if (pinBuffer.length === 4) {
+    setTimeout(checkPin, 150);
+  }
+}
+
+function pinDel() {
+  pinBuffer = pinBuffer.slice(0, -1);
+  updatePinDots();
+}
+
+function pinCancel() {
+  document.getElementById('pin-modal').classList.remove('show');
+  pinBuffer = '';
+}
+
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('pd' + i);
+    d.classList.toggle('filled', i < pinBuffer.length);
+    d.classList.remove('error');
+  }
+}
+
+function checkPin() {
+  if (pinBuffer === getPin()) {
+    document.getElementById('pin-modal').classList.remove('show');
+    pinUnlocked[pinTarget] = true;
+    switchTab(pinTarget);
+    pinBuffer = '';
+  } else {
+    // Hatalı — kırmızı titret
+    for (let i = 0; i < 4; i++)
+      document.getElementById('pd' + i).classList.add('error');
+    setTimeout(() => {
+      pinBuffer = '';
+      updatePinDots();
+    }, 700);
+    toast('Hatalı PIN!');
+  }
+}
+
+function changePin() {
+  const np = document.getElementById('new-pin').value.trim();
+  if (!/^\d{4}$/.test(np)) { toast('PIN 4 rakam olmalı'); return; }
+  localStorage.setItem(PIN_KEY, np);
+  document.getElementById('new-pin').value = '';
+  toast('PIN güncellendi ✅');
+}
+
+// ================================================================
+// TABS
+// ================================================================
+function switchTab(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ================================================================
+// BLE
+// ================================================================
+const NUS_SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const NUS_RX_CHAR = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+const NUS_TX_CHAR = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+
+async function toggleBT() {
+  connected ? disconnectBT() : await connectBT();
+}
+
+async function connectBT() {
+  if (!navigator.bluetooth) {
+    log('Web Bluetooth desteklenmiyor! Chrome Android kullanın.', 'err'); return;
+  }
+  try {
+    log('Cihaz taranıyor…', 'sys');
+    btDevice = await navigator.bluetooth.requestDevice({
+      filters: [{ name: 'ESP32_HEART' }],
+      optionalServices: [NUS_SERVICE]
+    });
+    log('Seçildi: ' + btDevice.name + ' — GATT bağlanıyor…', 'sys');
+    btDevice.addEventListener('gattserverdisconnected', onDisconnect);
+
+    let server;
+    try { server = await btDevice.gatt.connect(); }
+    catch(e1) { await new Promise(r=>setTimeout(r,1200)); server = await btDevice.gatt.connect(); }
+
+    log('GATT OK — servisler listeleniyor…', 'sys');
+    await new Promise(r => setTimeout(r, 600));
+    let allSvc = await server.getPrimaryServices();
+    log('Servis sayısı: ' + allSvc.length, 'sys');
+    allSvc.forEach(s => log('  ' + s.uuid, 'sys'));
+
+    let service = allSvc.find(s => s.uuid.toLowerCase() === NUS_SERVICE);
+    if (!service) {
+      await new Promise(r => setTimeout(r, 1000));
+      allSvc = await server.getPrimaryServices();
+      service = allSvc.find(s => s.uuid.toLowerCase() === NUS_SERVICE);
+    }
+    if (!service) throw new Error('NUS servisi bulunamadı');
+
+    btChar   = await service.getCharacteristic(NUS_TX_CHAR);
+    await btChar.startNotifications();
+    btChar.addEventListener('characteristicvaluechanged', onBTData);
+    btRxChar = await service.getCharacteristic(NUS_RX_CHAR);
+
+    setConnected(true);
+    log('✅ Bağlandı: ' + btDevice.name, 'sys');
+    // Bağlanınca hemen durum al
+    setTimeout(refreshStatus, 600);
+    setTimeout(() => sendCmd('game_status'), 1000);
+    // Otomatik yenileme başlat (10sn)
+    startAutoRefresh();
+  } catch(e) {
+    log('HATA: ' + e.name + ' — ' + e.message, 'err');
+    toast('Bağlantı başarısız');
+    btDevice = null;
+  }
+}
+
+function disconnectBT() {
+  stopAutoRefresh();
+  if (btDevice && btDevice.gatt.connected) btDevice.gatt.disconnect();
+  setConnected(false);
+}
+function onDisconnect() {
+  stopAutoRefresh();
+  setConnected(false);
+  log('Bağlantı kesildi', 'err');
+}
+function setConnected(v) {
+  connected = v;
+  document.getElementById('bt-dot').className = 'bt-dot' + (v ? ' on' : '');
+  document.getElementById('btn-bt-text').textContent = v ? 'Bağlantıyı Kes' : 'Cihaza Bağlan';
+  document.getElementById('btn-bt').className = 'btn-connect' + (v ? ' disconnect' : '');
+  document.getElementById('header-sub').textContent = v
+    ? ('Bağlı: ' + (btDevice ? btDevice.name : 'ESP32'))
+    : 'Bağlantı bekleniyor…';
+  if (!v) document.getElementById('auto-refresh-note').textContent = 'Bağlandığında otomatik yenilenir';
+}
+
+async function sendCmd(cmd) {
+  if (!connected || !btRxChar) return;
+  try {
+    await btRxChar.writeValueWithoutResponse(new TextEncoder().encode(cmd + '\n'));
+    log('→ ' + cmd, 'tx');
+  } catch(e) { log('Gönderme hatası: ' + e.message, 'err'); }
+}
+
+// ================================================================
+// OTOMATİK YENİLEME
+// ================================================================
+function refreshStatus() {
+  sendCmd('status');
+  sendCmd('game_status');
+}
+
+function startAutoRefresh() {
+  stopAutoRefresh();
+  let countdown = 10;
+  document.getElementById('auto-refresh-note').textContent = `Otomatik yenileme: ${countdown}s`;
+  autoRefreshTimer = setInterval(() => {
+    countdown--;
+    if (countdown <= 0) {
+      if (connected) refreshStatus();
+      countdown = 10;
+    }
+    document.getElementById('auto-refresh-note').textContent =
+      connected ? `Otomatik yenileme: ${countdown}s` : '';
+  }, 1000);
+}
+
+function stopAutoRefresh() {
+  if (autoRefreshTimer) { clearInterval(autoRefreshTimer); autoRefreshTimer = null; }
+}
+
+// ================================================================
+// RECEIVE
+// ================================================================
+let rxBuffer = '';
+function onBTData(e) {
+  rxBuffer += new TextDecoder().decode(e.target.value);
+  const lines = rxBuffer.split('\n');
+  rxBuffer = lines.pop();
+  lines.forEach(l => { l = l.trim(); if(l){ log('← '+l,'rx'); parseResponse(l); } });
+}
+
+// ================================================================
+// PARSE
+// ================================================================
+function parseResponse(line) {
+
+  // VOL:18 BR:80 TEST:1 GAME:0 SCORE:0.0 HI:250
+  if (line.startsWith('VOL:')) {
+    const m = line.match(/VOL:(\d+).*BR:(\d+).*TEST:(\d).*GAME:(\d).*SCORE:([\d.]+).*HI:(\d+)/);
+    if (m) {
+      setVal('d-vol', m[1]); setVal('d-br', m[2]); setVal('d-hi', m[6]);
+      setSlider('sl-vol','val-vol', m[1]);
+      setSlider('sl-br', 'val-br',  m[2]);
+      testActive = m[3] === '1';
+      gameActive = m[4] === '1';
+      updateModeCard(gameActive, testActive);
+    }
+    return;
+  }
+
+  if (line.startsWith('GAME_STATUS:')) {
+    const active = line.includes('ACTIVE:1');
+    const sm = line.match(/SCORE:([\d.]+)/);
+    const cm = line.match(/CORRECT:(\d+)/);
+    const wm = line.match(/WRONG:(\d+)/);
+    const hm = line.match(/HI:(\d+)/);
+    if (sm) setVal('g-score', parseFloat(sm[1]).toFixed(0));
+    if (cm) setVal('g-correct', cm[1]);
+    if (wm) setVal('g-wrong',   wm[1]);
+    if (hm) { setVal('g-hi',hm[1]); setVal('g-hi2',hm[1]); setVal('d-hi',hm[1]); }
+    gameActive = active;
+    updateModeCard(gameActive, testActive);
+    return;
+  }
+
+  if (line.startsWith('GAME_PARAMS:')) {
+    const bm=line.match(/B:(\d+)/), km=line.match(/K:([\d.]+)/),
+          tm=line.match(/TMAX:(\d+)/), cm=line.match(/C:(\d+)/);
+    if (bm) document.getElementById('p-b').value = bm[1];
+    if (km) document.getElementById('p-k').value = Math.round(parseFloat(km[1])*100);
+    if (tm) { document.getElementById('p-t').value = tm[1]; currentTmax = parseInt(tm[1]); }
+    if (cm) document.getElementById('p-c').value = cm[1];
+    calcPreview(); return;
+  }
+
+  if (line.startsWith('TEST_MODE:')) {
+    testActive = line.includes(':1');
+    updateModeCard(gameActive, testActive);
+    toast(testActive ? 'Test modu açıldı 🧪' : 'Test modu kapandı');
+    return;
+  }
+
+  if (line.startsWith('GAME_Q:')) {
+    const pad = parseInt(line.split(':')[1]);
+    questionStartTime = Date.now();
+    currentTmax = parseInt(document.getElementById('p-t').value) || 30;
+    startTimeBar();
+    setGameEvent('⏳ Soru: Bölge '+(pad+1), '#adbac7');
+    gameActive = true; updateModeCard(true, false); return;
+  }
+
+  if (line.startsWith('GAME_CORRECT:')) {
+    const pm=line.match(/PTS:([\d.]+)/), tm=line.match(/TOTAL:([\d.]+)/);
+    stopTimeBar();
+    setGameEvent('✅ Doğru! +'+(pm?parseFloat(pm[1]).toFixed(1):'?')+' puan','#3fb950');
+    if (tm) setVal('g-score', parseFloat(tm[1]).toFixed(0));
+    incrementVal('g-correct'); return;
+  }
+
+  if (line.startsWith('GAME_WRONG:')) {
+    const pm=line.match(/PENALTY:(\d+)/), tm=line.match(/TOTAL:([\d.]+)/);
+    stopTimeBar();
+    setGameEvent('❌ Yanlış! -'+(pm?pm[1]:'?')+' ceza','#e84d4d');
+    if (tm) setVal('g-score', parseFloat(tm[1]).toFixed(0));
+    incrementVal('g-wrong'); return;
+  }
+
+  if (line.startsWith('GAME_TIMEOUT:')) { stopTimeBar(); setGameEvent('⏰ Süre doldu! 0 puan','#d29922'); return; }
+
+  if (line.startsWith('GAME_END:')) {
+    const sm=line.match(/SCORE:(\d+)/), cm=line.match(/CORRECT:(\d+)/), wm=line.match(/WRONG:(\d+)/);
+    stopTimeBar(); gameActive = false; updateModeCard(false, testActive);
+    if (sm) setVal('g-score',sm[1]);
+    if (cm) setVal('g-correct',cm[1]);
+    if (wm) setVal('g-wrong',wm[1]);
+    setGameEvent('🏁 Oyun bitti! Skor: '+(sm?sm[1]:'?'),'#58a6ff'); return;
+  }
+
+  if (line.startsWith('GAME_RECORD:')) {
+    const sc = parseInt(line.split(':')[1]);
+    setVal('g-hi',sc); setVal('g-hi2',sc); setVal('d-hi',sc);
+    document.getElementById('g-hi2').className = 'new-record';
+    document.getElementById('g-record-note').textContent = '🏆 Yeni Rekor!';
+    toast('🏆 Yeni Rekor: '+sc); return;
+  }
+
+  if (line === 'GAME_START') {
+    gameActive = true; updateModeCard(true, false);
+    setVal('g-score','0'); setVal('g-correct','0'); setVal('g-wrong','0');
+    setGameEvent('🎮 Oyun başladı!','#58a6ff');
+    toast('Oyun modu başladı 🎮'); return;
+  }
+
+  if (line === 'CAL OK')              { toast('Kalibrasyon tamamlandı ✅'); return; }
+  if (line === 'SETTINGS_SAVED')      { toast('Ayarlar kaydedildi 💾'); return; }
+  if (line === 'GAME_SETTINGS_SAVED') { toast('Oyun parametreleri kaydedildi 💾'); return; }
+  if (line === 'HI_RESET')            { setVal('g-hi','0'); setVal('g-hi2','0'); toast('Rekor sıfırlandı'); return; }
+}
+
+// ================================================================
+// MOD KARTI GÜNCELLEME
+// ================================================================
+function updateModeCard(game, test) {
+  const card  = document.getElementById('mode-card');
+  const icon  = document.getElementById('mc-icon');
+  const name  = document.getElementById('mc-name');
+  const desc  = document.getElementById('mc-desc');
+  const badge = document.getElementById('mc-badge');
+
+  if (game) {
+    card.className = 'mode-card game';
+    icon.textContent = '🎮';
+    name.textContent = 'Oyun Modu';
+    desc.textContent = 'Puan kazanmak için doğru bölgeye dokun';
+    badge.textContent = 'OYUN';
+  } else if (test) {
+    card.className = 'mode-card test';
+    icon.textContent = '🧪';
+    name.textContent = 'Test Modu';
+    desc.textContent = 'Sesle sorulan bölgeyi bul';
+    badge.textContent = 'TEST';
+  } else {
+    card.className = 'mode-card learn';
+    icon.textContent = '📚';
+    name.textContent = 'Öğrenme Modu';
+    desc.textContent = 'Bölgeye dokununca sesli açıklama çalar';
+    badge.textContent = 'AKTİF';
+  }
+}
+
+// mod toggle — cihaza gönder ve geri bildirim bekle
+function toggleMode(mode) {
+  sendCmd(mode);
+}
+
+// ================================================================
+// UI HELPERS
+// ================================================================
+function setVal(id, v) { const el=document.getElementById(id); if(el) el.textContent=v; }
+function incrementVal(id) { const el=document.getElementById(id); if(el) el.textContent=(parseInt(el.textContent)||0)+1; }
+function setSlider(slId, valId, v) {
+  const sl=document.getElementById(slId), vl=document.getElementById(valId);
+  if(sl) sl.value=v; if(vl) vl.textContent=v;
+}
+function sliderInput(type, v) { document.getElementById('val-'+type).textContent=v; }
+async function sendSlider(type) { await sendCmd(type+document.getElementById('sl-'+type).value); }
+
+function setGameEvent(msg, color) {
+  const el=document.getElementById('g-last-event');
+  el.textContent=msg; el.style.color=color;
+}
+
+function startTimeBar() {
+  stopTimeBar();
+  const bar=document.getElementById('g-timebar');
+  timerInterval = setInterval(() => {
+    if (!questionStartTime) return;
+    const pct = Math.max(0, 100-((Date.now()-questionStartTime)/1000/currentTmax)*100);
+    bar.style.width = pct+'%';
+    bar.style.background = pct<20 ? 'var(--accent)' : pct<50 ? 'var(--accent4)' : 'linear-gradient(90deg,var(--accent3),var(--accent2))';
+  }, 100);
+}
+function stopTimeBar() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval=null; }
+  document.getElementById('g-timebar').style.width='0%';
+}
+
+function log(msg, type) {
+  const box=document.getElementById('log-box'), el=document.createElement('div');
+  el.className='log-entry '+(type||'');
+  const n=new Date();
+  el.textContent=`[${n.getHours().toString().padStart(2,'0')}:${n.getMinutes().toString().padStart(2,'0')}:${n.getSeconds().toString().padStart(2,'0')}] ${msg}`;
+  box.appendChild(el); box.scrollTop=box.scrollHeight;
+}
+function clearLog() { document.getElementById('log-box').innerHTML=''; }
+
+let toastTimer;
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+function sendRaw() {
+  const inp=document.getElementById('cmd-input'), v=inp.value.trim();
+  if(!v) return; sendCmd(v); inp.value='';
+}
+
+function sendParams() {
+  sendCmd('set_b:'+document.getElementById('p-b').value);
+  setTimeout(()=>sendCmd('set_k:'+document.getElementById('p-k').value),100);
+  setTimeout(()=>sendCmd('set_t:'+document.getElementById('p-t').value),200);
+  setTimeout(()=>sendCmd('set_c:'+document.getElementById('p-c').value),300);
+  currentTmax=parseInt(document.getElementById('p-t').value);
+  toast('Parametreler gönderildi'); calcPreview();
+}
+function saveParams() { sendParams(); setTimeout(()=>sendCmd('save_game'),500); }
+
+function calcPreview() {
+  const B=parseFloat(document.getElementById('p-b').value)||100;
+  const Ks=parseFloat(document.getElementById('p-k').value)/100||.4;
+  const T=parseFloat(document.getElementById('p-t').value)||30;
+  const C=parseFloat(document.getElementById('p-c').value)||20;
+  const ts=Math.min(parseFloat(document.getElementById('prev-t').value)||0, T);
+  const pts=(B*Ks)+(B*(1-Ks)*((T-ts)/T));
+  document.getElementById('prev-result').textContent=pts.toFixed(1)+' puan';
+  document.getElementById('prev-detail').textContent=`Sabit: ${(B*Ks).toFixed(1)} + Hız bonusu: ${(B*(1-Ks)*((T-ts)/T)).toFixed(1)}`;
+}
+
+function confirmResetHi() { if(confirm('High score sıfırlansın mı?')) sendCmd('reset_hi'); }
+
+// Init
+calcPreview();
+document.getElementById('prev-t').addEventListener('input', calcPreview);
+log('Uygulama hazır. Cihaza bağlanmak için butona tıklayın.', 'sys');
+log('Web Bluetooth API — Chrome Android gerektirir.', 'sys');
+</script>
+</body>
+</html>
