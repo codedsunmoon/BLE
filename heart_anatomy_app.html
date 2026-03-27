@@ -667,13 +667,22 @@ async function connectBT() {
       server = await btDevice.gatt.connect();
     }
 
-    // GATT bağlandıktan sonra servislerin hazır olması için kısa bekleme
-    // Bu olmadan Android Chrome getPrimaryService'te NotFoundError fırlatıyor
-    await new Promise(r => setTimeout(r, 500));
-    log('GATT OK — servis aranıyor…', 'sys');
+    log('GATT OK — servis discovery bekleniyor…', 'sys');
 
-    const service = await server.getPrimaryService(NUS_SERVICE);
-    log('NUS servisi bulundu', 'sys');
+    // Android Chrome, GATT connect döndükten sonra service discovery'yi
+    // arka planda tamamlar. Hazır olana kadar retry döngüsü kuruyoruz.
+    let service = null;
+    for (let attempt = 1; attempt <= 6; attempt++) {
+      await new Promise(r => setTimeout(r, 800));
+      try {
+        service = await server.getPrimaryService(NUS_SERVICE);
+        log('NUS servisi bulundu (deneme ' + attempt + ')', 'sys');
+        break;
+      } catch(e2) {
+        log('Servis henuz hazir degil, bekleniyor… (' + attempt + '/6)', 'sys');
+        if (attempt === 6) throw e2; // Tüm denemeler bitti, hatayı yukarı fırlat
+      }
+    }
 
     // TX: ESP → Telefon (Notify)
     btChar = await service.getCharacteristic(NUS_TX_CHAR);
