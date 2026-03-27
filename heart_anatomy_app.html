@@ -619,8 +619,16 @@ function switchTab(name) {
 }
 
 // ============================================================
-// BLUETOOTH (Web Bluetooth API)
+// BLUETOOTH (Web Bluetooth API — BLE Nordic UART Service)
 // ============================================================
+// ESP32 tarafındaki UUID'lerle birebir eşleşmeli:
+const NUS_SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const NUS_RX_CHAR = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // Write → ESP32
+const NUS_TX_CHAR = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // Notify ← ESP32
+
+let btRxChar = null; // Write characteristic (telefon → ESP)
+// btChar değişkeni TX (notify) için kullanılıyor (mevcut kod uyumu)
+
 async function toggleBT() {
   if (connected) {
     disconnectBT();
@@ -636,20 +644,24 @@ async function connectBT() {
     return;
   }
   try {
-    log('Cihaz aranıyor…', 'sys');
+    log('Cihaz aranıyor… (ESP32_HEART)', 'sys');
     btDevice = await navigator.bluetooth.requestDevice({
-      filters: [{ name: 'ESP32_TOUCH_MENU' }],
-      optionalServices: ['0000ffe0-0000-1000-8000-00805f9b34fb']
+      filters: [{ name: 'ESP32_HEART' }],
+      optionalServices: [NUS_SERVICE]
     });
 
     btDevice.addEventListener('gattserverdisconnected', onDisconnect);
 
     const server  = await btDevice.gatt.connect();
-    const service = await server.getPrimaryService('0000ffe0-0000-1000-8000-00805f9b34fb');
-    btChar        = await service.getCharacteristic('0000ffe1-0000-1000-8000-00805f9b34fb');
+    const service = await server.getPrimaryService(NUS_SERVICE);
 
+    // TX: ESP → Telefon (Notify)
+    btChar = await service.getCharacteristic(NUS_TX_CHAR);
     await btChar.startNotifications();
     btChar.addEventListener('characteristicvaluechanged', onBTData);
+
+    // RX: Telefon → ESP (Write)
+    btRxChar = await service.getCharacteristic(NUS_RX_CHAR);
 
     setConnected(true);
     log('Bağlandı: ' + btDevice.name, 'sys');
@@ -682,14 +694,15 @@ function setConnected(v) {
 }
 
 async function sendCmd(cmd) {
-  if (!connected || !btChar) {
+  if (!connected || !btRxChar) {
     log('Bağlı değil!', 'err');
     toast('Önce bağlanın');
     return;
   }
   try {
     const enc = new TextEncoder().encode(cmd + '\n');
-    await btChar.writeValue(enc);
+    // writeValueWithoutResponse daha hızlı; WRITE_NR özelliği ESP'de tanımlı
+    await btRxChar.writeValueWithoutResponse(enc);
     log('→ ' + cmd, 'tx');
   } catch(e) {
     log('Gönderme hatası: ' + e.message, 'err');
