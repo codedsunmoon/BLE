@@ -667,22 +667,35 @@ async function connectBT() {
       server = await btDevice.gatt.connect();
     }
 
-    log('GATT OK — servis discovery bekleniyor…', 'sys');
+    log('GATT OK — servisler listeleniyor…', 'sys');
 
-    // Android Chrome, GATT connect döndükten sonra service discovery'yi
-    // arka planda tamamlar. Hazır olana kadar retry döngüsü kuruyoruz.
-    let service = null;
-    for (let attempt = 1; attempt <= 6; attempt++) {
-      await new Promise(r => setTimeout(r, 800));
-      try {
-        service = await server.getPrimaryService(NUS_SERVICE);
-        log('NUS servisi bulundu (deneme ' + attempt + ')', 'sys');
-        break;
-      } catch(e2) {
-        log('Servis henuz hazir degil, bekleniyor… (' + attempt + '/6)', 'sys');
-        if (attempt === 6) throw e2; // Tüm denemeler bitti, hatayı yukarı fırlat
-      }
+    // getPrimaryService Android Chrome cache bug'ından etkileniyor.
+    // getServices() ile tüm servisleri alıp UUID'yi manuel eşleştiriyoruz.
+    await new Promise(r => setTimeout(r, 600));
+    const allServices = await server.getPrimaryServices();
+    log('Bulunan servis sayisi: ' + allServices.length, 'sys');
+    allServices.forEach(s => log('  UUID: ' + s.uuid, 'sys'));
+
+    let service = allServices.find(s =>
+      s.uuid.toLowerCase() === NUS_SERVICE.toLowerCase()
+    );
+
+    if (!service) {
+      // Bir kez daha dene — discovery bazen gecikmeli tamamlanır
+      log('NUS bulunamadi, 1sn bekleyip tekrar deneniyor…', 'sys');
+      await new Promise(r => setTimeout(r, 1000));
+      const allServices2 = await server.getPrimaryServices();
+      log('2. tarama servis sayisi: ' + allServices2.length, 'sys');
+      allServices2.forEach(s => log('  UUID: ' + s.uuid, 'sys'));
+      service = allServices2.find(s =>
+        s.uuid.toLowerCase() === NUS_SERVICE.toLowerCase()
+      );
     }
+
+    if (!service) {
+      throw new Error('NUS_SERVICE bulunamadi. Yukaridaki UUID listesini kontrol edin.');
+    }
+    log('NUS servisi bulundu: ' + service.uuid, 'sys');
 
     // TX: ESP → Telefon (Notify)
     btChar = await service.getCharacteristic(NUS_TX_CHAR);
